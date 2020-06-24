@@ -105,7 +105,8 @@ class FWMetaData:
                  fw_version=None,
                  softdevice_req=None,
                  sd_size=None,
-                 bl_size=None
+                 bl_size=None,
+                 nonce=None
                  ):
         """
         The FWMetaData data model.
@@ -124,6 +125,7 @@ class FWMetaData:
         self.softdevice_req = softdevice_req
         self.sd_size = sd_size
         self.bl_size = bl_size
+        self.nonce = nonce
 
 
 class Firmware:

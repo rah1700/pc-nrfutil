@@ -37,6 +37,7 @@
 #
 
 # Python standard library
+import subprocess
 import os
 import tempfile
 import shutil
@@ -128,6 +129,7 @@ class Package:
                  sd_boot_validation=DEFAULT_BOOT_VALIDATION_TYPE,
                  app_boot_validation=DEFAULT_BOOT_VALIDATION_TYPE,
                  key_file=None,
+                 enc_key_file=None,
                  is_external=False,
                  zigbee_format=False,
                  manufacturer_id=0,
@@ -202,6 +204,10 @@ class Package:
                                      init_packet_data=init_packet_vars)
 
         self.key_file = key_file
+
+        # Load encryption keys
+        with open(enc_key_file, 'r') as file:
+            self.enc_key = file.read().replace('\n', '').replace(' ', '')
 
         self.work_dir = None
         self.manifest = None
@@ -305,6 +311,7 @@ class Package:
       |- boot_validation_signature (little-endian): {17}
       |
       |- is_debug: {18}
+      |- nonce (little-endian): {19}
 
 """.format(index,
         type_strs[hex_type],
@@ -325,6 +332,7 @@ class Package:
         boot_validation_type,
         boot_validation_bytes,
         cmd.init.is_debug,
+        binascii.hexlify(cmd.init.nonce)
         )
 
         return s
@@ -408,10 +416,20 @@ DFU Package: <{0}>:
             sd_bin_created = True
 
         for key, firmware_data in self.firmwares_data.items():
+            # Create nonce for firmware package
+            nonce = os.urandom(12)
 
             # Normalize the firmware file and store it in the work directory
             firmware_data[FirmwareKeys.BIN_FILENAME] = \
                 Package.normalize_firmware_to_bin(self.work_dir, firmware_data[FirmwareKeys.FIRMWARE_FILENAME])
+
+            # Encrypt firmware data BEFORE calculating the hash
+            encrypt = "openssl.exe enc -e -aes-128-ctr -in {0} -out {0}.enc -K {1} -iv {2}00000000 -v"
+            encrypt = encrypt.format(firmware_data[FirmwareKeys.BIN_FILENAME], self.enc_key, bytes(nonce).hex())
+            print(encrypt)
+            os.system(encrypt)
+            os.remove(firmware_data[FirmwareKeys.BIN_FILENAME])
+            os.rename(firmware_data[FirmwareKeys.BIN_FILENAME]+".enc", firmware_data[FirmwareKeys.BIN_FILENAME])
 
             # Calculate the hash for the .bin file located in the work directory
             bin_file_path = os.path.join(self.work_dir, firmware_data[FirmwareKeys.BIN_FILENAME])
@@ -442,7 +460,6 @@ DFU Package: <{0}>:
                 else:
                     boot_validation_bytes_array.append(b'')
 
-
             init_packet = InitPacketPB(
                             from_bytes = None,
                             hash_bytes=firmware_hash,
@@ -456,7 +473,8 @@ DFU Package: <{0}>:
                             sd_size=sd_size,
                             app_size=app_size,
                             bl_size=bl_size,
-                            sd_req=firmware_data[FirmwareKeys.INIT_PACKET_DATA][PacketField.REQUIRED_SOFTDEVICES_ARRAY])
+                            sd_req=firmware_data[FirmwareKeys.INIT_PACKET_DATA][PacketField.REQUIRED_SOFTDEVICES_ARRAY],
+                            nonce=nonce)
 
             if (self.key_file is not None):
                 signer = Signing()

@@ -582,6 +582,10 @@ def pkg():
               help='The private (signing) key in PEM format.',
               required=False,
               type=click.Path(exists=True, resolve_path=True, file_okay=True, dir_okay=False))
+@click.option('--enc-key-file',
+              help='The encryption key file in hex format.',
+              required=False,
+              type=click.Path(exists=True, resolve_path=True, file_okay=True, dir_okay=False))
 @click.option('--external-app',
               help='Indicates that the FW upgrade is intended to be passed through '
                    '(not applied on the receiving device)',
@@ -632,6 +636,7 @@ def generate(zipfile,
            sd_boot_validation,
            app_boot_validation,
            key_file,
+           enc_key_file,
            external_app,
            zigbee,
            zigbee_manufacturer_id,
@@ -669,6 +674,10 @@ def generate(zipfile,
     if bootloader is not None and application is not None and softdevice is None:
         raise click.UsageError("Invalid combination: use two .zip packages instead.")
 
+    # Check for encryption key file
+    if (bootloader is not None or application is not None) and enc_key_file is None:
+        raise click.UsageError("Encryption key file not specified.")
+    
     if debug_mode is None:
         debug_mode = False
 
@@ -870,6 +879,7 @@ def generate(zipfile,
                       sd_boot_validation,
                       app_boot_validation,
                       key_file,
+                      enc_key_file,
                       inner_external_app,
                       zigbee,
                       zigbee_manufacturer_id,

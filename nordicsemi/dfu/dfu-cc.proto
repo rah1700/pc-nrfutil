@@ -56,7 +56,9 @@ message InitCommand {
     
 	optional bool			is_debug		= 9 [default = false];
 
-	repeated BootValidation	boot_validation	= 10;
+	optional bytes  		nonce			= 10;	
+	
+	repeated BootValidation	boot_validation	= 11;
 }
 
 message ResetCommand {

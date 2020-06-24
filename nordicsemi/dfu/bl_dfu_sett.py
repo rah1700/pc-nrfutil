@@ -409,9 +409,10 @@ Bootloader DFU Settings:
 * Boot Validation CRC:      0x{13:08X}
 * SD Boot Validation Type:  0x{14:08X} ({14})
 * App Boot Validation Type: 0x{15:08X} ({15})
+* Nonce:                    0x{16:12X}
 """.format(self.hex_file, self.arch_str, self.bl_sett_addr, self.crc, self.bl_sett_ver, self.app_ver,
            self.bl_ver, self.bank_layout, self.bank_current, self.app_sz, self.app_crc, self.bank0_bank_code,
-           self.sd_sz, self.boot_validation_crc, self.sd_boot_validation_type, self.app_boot_validation_type)
+           self.sd_sz, self.boot_validation_crc, self.sd_boot_validation_type, self.app_boot_validation_type, self.nonce)
         return s
 
     def tohexfile(self, f):
