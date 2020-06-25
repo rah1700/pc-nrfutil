@@ -55,10 +55,10 @@ message InitCommand {
 	optional Hash			hash			= 8;
     
 	optional bool			is_debug		= 9 [default = false];
-
-	optional bytes  		nonce			= 10;	
 	
-	repeated BootValidation	boot_validation	= 11;
+	repeated BootValidation	boot_validation	= 10;
+	
+	optional bytes  		nonce			= 11;
 }
 
 message ResetCommand {
