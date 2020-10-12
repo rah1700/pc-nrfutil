@@ -254,7 +254,7 @@ def cli(verbose, output):
 @cli.command()
 def version():
     """Display nrfutil version."""
-    click.echo("nrfutil version {}".format(nrfutil_version.NRFUTIL_VERSION))
+    click.echo("Ommo nrfutil version {}".format(nrfutil_version.NRFUTIL_VERSION))
     logger.info("PyPi URL: https://pypi.python.org/pypi/nrfutil")
     logger.debug("GitHub URL: https://github.com/NordicSemiconductor/pc-nrfutil")
 
