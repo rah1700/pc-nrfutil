@@ -586,6 +586,10 @@ def pkg():
               help='The encryption key file in hex format.',
               required=False,
               type=click.Path(exists=True, resolve_path=True, file_okay=True, dir_okay=False))
+@click.option('--dfu-capability-mask',
+              help='The DFU capabilities of the updated firmware.',
+              required=False,
+              type=BASED_INT_OR_NONE)
 @click.option('--external-app',
               help='Indicates that the FW upgrade is intended to be passed through '
                    '(not applied on the receiving device)',
@@ -637,6 +641,7 @@ def generate(zipfile,
            app_boot_validation,
            key_file,
            enc_key_file,
+           dfu_capability_mask,
            external_app,
            zigbee,
            zigbee_manufacturer_id,
@@ -699,6 +704,9 @@ def generate(zipfile,
 
     if hw_version == 'none':
         hw_version = None
+
+    if dfu_capability_mask == 'none':
+        dfu_capability_mask = None
 
     if external_app is None:
         external_app = False
@@ -839,7 +847,7 @@ def generate(zipfile,
     if zigbee_image_type is None:
         zigbee_image_type = 0xFFFF
 
-    # Set the external_app to false in --zigbee is set
+    # Set the external_app to false if --zigbee is set
     inner_external_app = external_app
     if zigbee:
         inner_external_app = False
@@ -880,6 +888,7 @@ def generate(zipfile,
                       app_boot_validation,
                       key_file,
                       enc_key_file,
+                      dfu_capability_mask,
                       inner_external_app,
                       zigbee,
                       zigbee_manufacturer_id,
@@ -902,19 +911,19 @@ def generate(zipfile,
         copyfile(package.zigbee_ota_file.filename, binfile)
 
         # Create the outer Zigbee DFU package.
-        package = Package(debug_mode,
-                          zigbee_ota_hw_version,
-                          zigbee_ota_fw_version,
-                          None,
-                          [0xFFFE],
-                          [0xFFFE],
-                          binfile,
-                          None,
-                          None,
-                          None,
-                          None,
-                          key_file,
-                          True)
+        package = Package(debug_mode=debug_mode,
+                          hw_version=zigbee_ota_hw_version,
+                          app_version=zigbee_ota_fw_version,
+                          bl_version=None,
+                          sd_req=[0xFFFE],
+                          sd_id=[0xFFFE],
+                          application=binfile,
+                          bootloader=None,
+                          softdevice=None,
+                          sd_boot_validation=None,
+                          app_boot_validation=None,
+                          key_file=key_file,
+                          is_external=True)
 
         package.generate_package(zipfile_path)
         remove(binfile)

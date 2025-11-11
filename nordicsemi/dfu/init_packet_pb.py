@@ -81,7 +81,8 @@ class InitPacketPB:
                  app_size=0,
                  bl_size=0,
                  sd_req=None,
-                 nonce = None
+                 nonce = None,
+                 dfu_capability_mask = None
                  ):
 
         if from_bytes is not None:
@@ -121,6 +122,9 @@ class InitPacketPB:
             self.init_command.bl_size = bl_size
             self.init_command.app_size = app_size
             self.init_command.nonce = nonce
+
+            if dfu_capability_mask is not None:
+                self.init_command.dfu_capability_mask = dfu_capability_mask
 
             self.init_command.boot_validation.extend(boot_validation)
             self.packet.command.init.CopyFrom(self.init_command)

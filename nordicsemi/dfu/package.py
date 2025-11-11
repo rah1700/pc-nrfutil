@@ -75,6 +75,7 @@ class PacketField(Enum):
     HW_VERSION = 2
     FW_VERSION = 3
     REQUIRED_SOFTDEVICES_ARRAY = 4
+    DFU_CAPABILITY_MASK = 5
 
 class Package:
     """
@@ -130,6 +131,7 @@ class Package:
                  app_boot_validation=DEFAULT_BOOT_VALIDATION_TYPE,
                  key_file=None,
                  enc_key_file=None,
+                 dfu_capability_mask=None,
                  is_external=False,
                  zigbee_format=False,
                  manufacturer_id=0,
@@ -165,6 +167,9 @@ class Package:
 
         if sd_id is not None:
             init_packet_vars[PacketField.REQUIRED_SOFTDEVICES_ARRAY] = sd_id
+
+        if dfu_capability_mask is not None:
+            init_packet_vars[PacketField.DFU_CAPABILITY_MASK] = dfu_capability_mask
 
         if sd_boot_validation is not None:
             sd_boot_validation_type = [ValidationTypes[sd_boot_validation]]
@@ -206,8 +211,9 @@ class Package:
         self.key_file = key_file
 
         # Load encryption keys
-        with open(enc_key_file, 'r') as file:
-            self.enc_key = file.read().replace('\n', '').replace(' ', '')
+        if enc_key_file is not None:
+            with open(enc_key_file, 'r') as file:
+                self.enc_key = file.read().replace('\n', '').replace(' ', '')
 
         self.work_dir = None
         self.manifest = None
@@ -230,7 +236,7 @@ class Package:
         Destructor removes the temporary working directory
         :return:
         """
-        if self.work_dir is not None:
+        if hasattr(self, 'work_dir') and self.work_dir is not None:
             shutil.rmtree(self.work_dir)
         self.work_dir = None
 
@@ -460,6 +466,10 @@ DFU Package: <{0}>:
                 else:
                     boot_validation_bytes_array.append(b'')
 
+            dfu_capability_mask = None
+            if PacketField.DFU_CAPABILITY_MASK in firmware_data[FirmwareKeys.INIT_PACKET_DATA]:
+                dfu_capability_mask = firmware_data[FirmwareKeys.INIT_PACKET_DATA][PacketField.DFU_CAPABILITY_MASK]
+
             init_packet = InitPacketPB(
                             from_bytes = None,
                             hash_bytes=firmware_hash,
@@ -474,7 +484,8 @@ DFU Package: <{0}>:
                             app_size=app_size,
                             bl_size=bl_size,
                             sd_req=firmware_data[FirmwareKeys.INIT_PACKET_DATA][PacketField.REQUIRED_SOFTDEVICES_ARRAY],
-                            nonce=nonce)
+                            nonce=nonce,
+                            dfu_capability_mask=dfu_capability_mask)
 
             if (self.key_file is not None):
                 signer = Signing()
